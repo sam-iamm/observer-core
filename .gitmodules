@@ -1,3 +1,6 @@
 [submodule "foundry/lib/ds-test"]
 	path = foundry/lib/ds-test
 	url = https://github.com/dapphub/ds-test
+[submodule "foundry/lib/squeeth-monorepo"]
+	path = foundry/lib/squeeth-monorepo
+	url = https://github.com/opynfinance/squeeth-monorepo
