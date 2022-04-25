@@ -10,3 +10,6 @@
 [submodule "foundry/lib/v3-periphery"]
 	path = foundry/lib/v3-periphery
 	url = https://github.com/Uniswap/v3-periphery
+[submodule "foundry/lib/openzeppelin-contracts"]
+	path = foundry/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
