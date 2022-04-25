@@ -26,6 +26,35 @@
         "type": "constructor"
     },
     {
+        "inputs": [],
+        "name": "get_l1_contract_address",
+        "outputs": [
+            {
+                "name": "res",
+                "type": "felt"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "oracle_id",
+                "type": "felt"
+            }
+        ],
+        "name": "get_uni_v3_oracle_data",
+        "outputs": [
+            {
+                "name": "res",
+                "type": "(felt, felt)"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
                 "name": "from_address",
