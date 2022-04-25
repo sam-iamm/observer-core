@@ -29,6 +29,28 @@ func constructor{
     return ()
 end
 
+# Returns the l1 contract address
+@view
+func get_l1_contract_address{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}() -> (res : felt):
+    let (l1_contract_address) = l1_contract.read()
+    return (l1_contract_address)
+end
+
+# Returns the oracle data of the given oracle_id.
+@view
+func get_uni_v3_oracle_data{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+}(oracle_id : felt) -> (res : (felt, felt)):
+    let (oracle_data) = uni_v3_oracles.read(oracle_id)
+    return ((oracle_data[0], oracle_data[1]))
+end
+
 # Handler for new oracle updates from L1
 @l1_handler
 func post_uni_v3_oracle_update{

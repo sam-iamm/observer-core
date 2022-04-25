@@ -1,12 +1,10 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity =0.8.10;
-
-import "ds-test/test.sol";
 
 import {IStarknetCore} from "./interfaces/IStarknetCore.sol";
 import {IUniV3OracleAdapter} from "./interfaces/IUniV3OracleAdapter.sol";
 
-contract Observer is DSTest {
+contract Observer {
 
     IStarknetCore public immutable starknetCore;
     IUniV3OracleAdapter public immutable uniV3OracleAdapter;
@@ -31,10 +29,11 @@ contract Observer is DSTest {
         uint starknetSelector; // corresponding Starknet contract selector
     }
 
-    mapping(bytes32 => UniV3Oracle) public uniV3Oracles;
+    mapping(uint => UniV3Oracle) public uniV3Oracles;
+    uint public oracleCounter = uint(0);
 
     event UniV3OracleAdded(
-        bytes32 oracleId,
+        uint oracleId,
         address pool,
         address baseCurrency,
         address quoteCurrency,
@@ -46,13 +45,13 @@ contract Observer is DSTest {
         uint starknetSelector
     );
     event IncentiveAdded(
-        bytes32 oracleId, 
+        uint oracleId, 
         uint incentiveAvailable,
         address payer,
         uint incentivePaid
     );
     event TwapUpdated(
-        bytes32 oracleId, 
+        uint oracleId, 
         uint twap,
         uint updatedAt,
         address caller,
@@ -64,7 +63,7 @@ contract Observer is DSTest {
         _;
     }
 
-    modifier onlyInitializedUniV3Oracle(bytes32 oracleId) {
+    modifier onlyInitializedUniV3Oracle(uint oracleId) {
         require(uniV3Oracles[oracleId].initialized == true);
         _;
     }
@@ -86,18 +85,6 @@ contract Observer is DSTest {
         uint starknetAddress,
         uint starknetSelector
     ) external payable onlyOracleAdder {
-        bytes32 oracleId = keccak256(
-            abi.encodePacked(
-                pool,
-                baseCurrency,
-                quoteCurrency,
-                twapPeriod,
-                updateDeviationThreshold,
-                updateDurationThreshold,
-                incentiveBaseFeeMultiplier,
-                starknetAddress
-            )
-        );
         uint twap = uniV3OracleAdapter.getTwap(
             pool,
             baseCurrency,
@@ -105,6 +92,7 @@ contract Observer is DSTest {
             twapPeriod,
             true
         );
+        uint oracleId = oracleCounter;
         uniV3Oracles[oracleId] = UniV3Oracle(
             {
                 initialized: true, 
@@ -122,10 +110,12 @@ contract Observer is DSTest {
                 starknetSelector: starknetSelector
             }
         );
+        oracleCounter = oracleId + 1;
 
-        uint[] memory payload = new uint[](2);
-        payload[0] = twap;
-        payload[1] = block.timestamp;
+        uint[] memory payload = new uint[](3);
+        payload[0] = oracleId;
+        payload[1] = twap;
+        payload[2] = block.timestamp;
         starknetCore.sendMessageToL2(starknetAddress, starknetSelector, payload);
 
         if(msg.value > 0) {
@@ -159,7 +149,7 @@ contract Observer is DSTest {
         );
     }
 
-    function addUniV3Incentive(bytes32 oracleId) external payable onlyInitializedUniV3Oracle(oracleId) {
+    function addUniV3Incentive(uint oracleId) external payable onlyInitializedUniV3Oracle(oracleId) {
         require(msg.value > 0, "requires msg.value > 0");
 
         uint prevIncentiveAvailable = uniV3Oracles[oracleId].incentiveAvailable;
@@ -174,7 +164,7 @@ contract Observer is DSTest {
         );
     }
 
-    function updateUniV3Oracle(bytes32 oracleId) external onlyInitializedUniV3Oracle(oracleId) {
+    function updateUniV3Oracle(uint oracleId) external onlyInitializedUniV3Oracle(oracleId) {
         uint prevTwap = uniV3Oracles[oracleId].twap;
         uint prevLastUpdatedAt = uniV3Oracles[oracleId].lastUpdatedAt;
 
@@ -188,9 +178,10 @@ contract Observer is DSTest {
         uniV3Oracles[oracleId].twap = twap;
         uniV3Oracles[oracleId].lastUpdatedAt = block.timestamp;
 
-        uint[] memory payload = new uint[](2);
-        payload[0] = twap;
-        payload[1] = block.timestamp;
+        uint[] memory payload = new uint[](3);
+        payload[0] = uint(oracleId);
+        payload[1] = twap;
+        payload[2] = block.timestamp;
         starknetCore.sendMessageToL2(uniV3Oracles[oracleId].starknetAddress, uniV3Oracles[oracleId].starknetSelector, payload);
 
         uint incentivePaid = 0;
@@ -218,7 +209,7 @@ contract Observer is DSTest {
         );
     }
 
-    function checkThresholds(bytes32 oracleId) public view onlyInitializedUniV3Oracle(oracleId) returns (bool deviationThreshold, bool durationThreshold) {
+    function checkThresholds(uint oracleId) public view onlyInitializedUniV3Oracle(oracleId) returns (bool deviationThreshold, bool durationThreshold) {
         uint prevTwap = uniV3Oracles[oracleId].twap;
         uint prevLastUpdatedAt = uniV3Oracles[oracleId].lastUpdatedAt;
 
@@ -234,7 +225,7 @@ contract Observer is DSTest {
         durationThreshold = _checkDurationThreshold(oracleId, prevLastUpdatedAt);
     }
 
-    function _checkDeviationThreshold(bytes32 oracleId, uint prevTwap, uint newTwap) internal view returns (bool deviationThreshold) {
+    function _checkDeviationThreshold(uint oracleId, uint prevTwap, uint newTwap) internal view returns (bool deviationThreshold) {
         uint twapDeviation;
         if(newTwap >= prevTwap) {
             twapDeviation = ((newTwap - prevTwap) * PERCENTAGE_FACTOR) / prevTwap;
@@ -244,7 +235,7 @@ contract Observer is DSTest {
         deviationThreshold = (twapDeviation >= uniV3Oracles[oracleId].updateDeviationThreshold);
     }
 
-    function _checkDurationThreshold(bytes32 oracleId, uint prevLastUpdatedAt) internal view returns (bool durationThreshold) {
+    function _checkDurationThreshold(uint oracleId, uint prevLastUpdatedAt) internal view returns (bool durationThreshold) {
         uint timeDiff = block.timestamp - prevLastUpdatedAt;
         durationThreshold = (timeDiff >= uniV3Oracles[oracleId].updateDurationThreshold);
     }
