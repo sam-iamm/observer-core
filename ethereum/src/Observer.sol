@@ -118,10 +118,6 @@ contract Observer {
         payload[2] = block.timestamp;
         starknetCore.sendMessageToL2(starknetAddress, starknetSelector, payload);
 
-        if(msg.value > 0) {
-            payable(msg.sender).transfer(msg.value);
-        }
-
         emit UniV3OracleAdded(
             oracleId,
             pool,
@@ -145,7 +141,7 @@ contract Observer {
             twap, 
             block.timestamp, 
             msg.sender, 
-            msg.value
+            0
         );
     }
 
@@ -154,7 +150,6 @@ contract Observer {
 
         uint prevIncentiveAvailable = uniV3Oracles[oracleId].incentiveAvailable;
         uniV3Oracles[oracleId].incentiveAvailable = prevIncentiveAvailable + msg.value;
-        payable(msg.sender).transfer(msg.value);
 
         emit IncentiveAdded(
             oracleId, 
