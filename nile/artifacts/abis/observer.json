@@ -1,0 +1,51 @@
+[
+    {
+        "data": [
+            {
+                "name": "twap",
+                "type": "felt"
+            },
+            {
+                "name": "last_updated_at",
+                "type": "felt"
+            }
+        ],
+        "keys": [],
+        "name": "uni_v3_oracle_updated",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "name": "l1_contract_address",
+                "type": "felt"
+            }
+        ],
+        "name": "constructor",
+        "outputs": [],
+        "type": "constructor"
+    },
+    {
+        "inputs": [
+            {
+                "name": "from_address",
+                "type": "felt"
+            },
+            {
+                "name": "oracle_id",
+                "type": "felt"
+            },
+            {
+                "name": "twap",
+                "type": "felt"
+            },
+            {
+                "name": "last_updated_at",
+                "type": "felt"
+            }
+        ],
+        "name": "post_uni_v3_oracle_update",
+        "outputs": [],
+        "type": "l1_handler"
+    }
+]
